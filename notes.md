@@ -8,12 +8,12 @@ As part of `Deliverable ⓵ Development deployment: JWT Pizza`, start up the app
 | --------------------------------------------------- | ------------------ | ----------------- | ------------ |
 | View home page                                      |         home.jsx           |       none            |     none         |
 | Register new user<br/>(t@jwt.com, pw: test)         |          register.jsx          |     [POST] /api/auth              |   INSERT INTO user (name, email, password) VALUES (?, ?, ?) INSERT INTO userRole (userId, role, objectId) VALUES (?, ?, ?)           |
-| Login new user<br/>(t@jwt.com, pw: test)            |                    |                   |              |
-| Order pizza                                         |                    |                   |              |
-| Verify pizza                                        |                    |                   |              |
-| View profile page                                   |                    |                   |              |
+| Login new user<br/>(t@jwt.com, pw: test)            |       login.jsx             |      [PUT] /api/auth             |    SELECT * FROM user WHERE email=? SELECT * FROM userRole WHERE userId=? INSERT INTO auth (token, userId) VALUES (?, ?)       |
+| Order pizza                                         |      menu.jsx  payment.jsx delivery.jsx           |    [GET] /api/order/menu [POST] /api/order               |   SELECT * FROM menu SELECT id, name FROM franchise SELECT id, name FROM store WHERE franchiseId=? INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now()) INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?) SELECT id FROM {table} WHERE ${key}=?            |
+| Verify pizza                                        |     delivery.jsx               |     [POST] /api/order/verify              |   none           |
+| View profile page                                   |   dinerDashboard.jsx                 |    [GET] /api/order               |  SELECT userId FROM auth WHERE token=? SELECT id, franchiseId, storeId, date FROM dinerOrder WHERE dinerId=? LIMIT {offset},${config.db.listPerPage} SELECT id, menuId, description, price FROM orderItem WHERE orderId=?          |
 | View franchise<br/>(as diner)                       |                    |                   |              |
-| Logout                                              |                    |                   |              |
+| Logout                                              |       logout.jsx             |       [DELETE] /api/auth            |    SELECT userId FROM auth WHERE token=? DELETE FROM auth WHERE token=?          |
 | View About page                                     |                    |                   |              |
 | View History page                                   |                    |                   |              |
 | Login as franchisee<br/>(f@jwt.com, pw: franchisee) |                    |                   |              |
