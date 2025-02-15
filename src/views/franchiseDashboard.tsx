@@ -18,6 +18,7 @@ export default function FranchiseDashboard(props: Props) {
   React.useEffect(() => {
     (async () => {
       if (props.user) {
+        console.log(props.user)
         const franchises = await pizzaService.getFranchise(props.user);
         if (franchises.length) setFranchise(franchises[0]);
       }
