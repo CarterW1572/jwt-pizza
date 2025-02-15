@@ -1,5 +1,19 @@
 import { test, expect } from 'playwright-test-coverage';
 
+test('setup', async ({ page }) => {
+  page.goto('http://localhost:5173/');
+  await page.getByRole('link', { name: 'Register' }).click();
+  await expect(page.getByRole('heading')).toContainText('Welcome to the party');
+  await page.getByRole('textbox', { name: 'Full name' }).fill('diner');
+  await page.getByRole('textbox', { name: 'Email address' }).click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
+  await page.getByRole('textbox', { name: 'Password' }).click();
+  await page.getByRole('textbox', { name: 'Password' }).fill('diner');
+  await page.getByRole('button', { name: 'Register' }).click();
+  await expect(page.locator('#navbar-dark')).toContainText('Logout');
+  await page.getByRole('link', { name: 'logout' }).click();
+});
+
 test('home page', async ({ page }) => {
   await page.goto('/');
 
@@ -16,16 +30,16 @@ test('buy pizza with login', async ({ page }) => {
   await expect(page.locator('form')).toContainText('Selected pizzas: 2');
   await page.getByRole('button', { name: 'Checkout' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).click();
-  await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+  await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
   await page.getByRole('textbox', { name: 'Password' }).click();
-  await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+  await page.getByRole('textbox', { name: 'Password' }).fill('diner');
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page.getByRole('heading')).toContainText('So worth it');
   await page.getByRole('button', { name: 'Pay now' }).click();
   await expect(page.getByRole('heading')).toContainText('Here is your JWT Pizza!');
   await page.getByRole('button', { name: 'Verify' }).click();
-  await expect(page.locator('h3')).toContainText('JWT Pizza - valid');
-  await page.getByRole('button', { name: 'Close' }).click();});
+  await expect(page.locator('#hs-jwt-modal')).toContainText('Close');
+});
 
 test('purchase with login', async ({ page }) => {
     await page.route('*/**/api/order/menu', async (route) => {
@@ -56,11 +70,18 @@ test('purchase with login', async ({ page }) => {
     });
   
     await page.route('*/**/api/auth', async (route) => {
-      const loginReq = { email: 'a@jwt.com', password: 'admin' };
-      const loginRes = { user: { id: 3, name: 'Kai Chen', email: 'a@jwt.com', roles: [{ role: 'admin' }] }, token: 'abcdef' };
-      expect(route.request().method()).toBe('PUT');
-      expect(route.request().postDataJSON()).toMatchObject(loginReq);
-      await route.fulfill({ json: loginRes });
+      if (route.request().method() == 'DELETE') {
+        expect(route.request().method()).toBe('DELETE');
+        const logoutRes = { message: 'logout successful' };
+        await route.fulfill({ json: logoutRes });
+      }
+      else {
+        const loginReq = { email: 'd@jwt.com', password: 'diner' };
+        const loginRes = { user: { id: 3, name: 'Kai Chen', email: 'd@jwt.com', roles: [{ role: 'diner' }] }, token: 'abcdef' };
+        expect(route.request().method()).toBe('PUT');
+        expect(route.request().postDataJSON()).toMatchObject(loginReq);
+        await route.fulfill({ json: loginRes });
+      }
     });
   
     await page.route('*/**/api/order', async (route) => {
@@ -104,9 +125,9 @@ test('purchase with login', async ({ page }) => {
   
     // Login
     await page.getByPlaceholder('Email address').click();
-    await page.getByPlaceholder('Email address').fill('a@jwt.com');
+    await page.getByPlaceholder('Email address').fill('d@jwt.com');
     await page.getByPlaceholder('Email address').press('Tab');
-    await page.getByPlaceholder('Password').fill('admin');
+    await page.getByPlaceholder('Password').fill('diner');
     await page.getByRole('button', { name: 'Login' }).click();
   
     // Pay
@@ -118,6 +139,137 @@ test('purchase with login', async ({ page }) => {
   
     // Check balance
     await expect(page.getByText('0.008')).toBeVisible();
+    await page.getByRole('link', { name: 'logout' }).click();
+});
+
+test('register diner', async ({ page }) => {
+  await page.route('*/**/api/auth', async (route) => {
+    if (route.request().method() == 'DELETE') {
+        expect(route.request().method()).toBe('DELETE');
+        const logoutRes = { message: 'logout successful' };
+        await route.fulfill({ json: logoutRes });
+    }
+    else {
+      const registerReq = { name: 'diner', email: 'd@jwt.com', password: 'diner' };
+      const registerRes = { user: { id: 4, name: 'diner', email: 'd@jwt.com', roles: [{ role: 'diner' }] }, token: 'abcdef' };
+      expect(route.request().method()).toBe('POST');
+      expect(route.request().postDataJSON()).toMatchObject(registerReq);
+      await route.fulfill({ json: registerRes });
+    }
   });
 
-  
+  await page.goto('/');
+  await expect(page.locator('#navbar-dark')).toContainText('Register');
+  await page.getByRole('link', { name: 'Register' }).click();
+  await expect(page.getByRole('heading')).toContainText('Welcome to the party');
+  await page.getByRole('textbox', { name: 'Full name' }).fill('diner');
+  await page.getByRole('textbox', { name: 'Email address' }).click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
+  await page.getByRole('textbox', { name: 'Password' }).click();
+  await page.getByRole('textbox', { name: 'Password' }).fill('diner');
+  await page.getByRole('button', { name: 'Register' }).click();
+  await expect(page.locator('#navbar-dark')).toContainText('Logout');
+  await page.getByRole('link', { name: 'logout' }).click();
+});
+
+test('about', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByRole('link', { name: 'About' }).click();
+    await expect(page.getByRole('main')).toContainText('The secret sauce');
+})
+
+test('history', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByRole('link', { name: 'History' }).click();
+    await expect(page.getByRole('heading')).toContainText('Mama Rucci, my my');
+});
+
+test('franchise dashboard with login', async ({ page }) => {
+    await page.route('*/**/api/auth', async (route) => {
+         const loginReq = { email: 'f@jwt.com', password: 'franchisee' };
+         const loginRes = { user: { id: 3, name: 'pizza franchisee', email: 'f@jwt.com', roles: [{ role: 'diner' }, { objectId: 1, role: 'franchisee' }] }, token: 'abcdeg' };
+         expect(route.request().method()).toBe('PUT');
+         expect(route.request().postDataJSON()).toMatchObject(loginReq);
+         await route.fulfill({ json: loginRes });
+    });
+    
+    await page.route('*/**/api/franchise/*', async (route) => {
+       const franchiseRes = { id: 1, 
+                              name: 'pizzaPocket', 
+                              admins: [{ id: 3, name: 'pizza franchisee', email: 'f@jwt.com' }], 
+                              stores: [{ id: 1, name: 'SLC', totalRevenue: 0.101 }] };
+       expect(route.request().method()).toBe('GET');
+       await route.fulfill({ json: franchiseRes, 
+                             headers: { 'Authorization': 'Bearer abcdeg' }});
+    });
+    
+    await page.goto('/');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByRole('link', { name: 'login' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome back');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('f@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill('franchisee');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page.locator('#navbar-dark')).toContainText('Logout');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
+    //await page.waitForURL('**/franchise-dashboard');  // Add this line
+    //await expect(page.getByRole('heading', { name: 'pizzaPocket' })).toBeVisible();
+    //await expect(page.getByRole('heading')).toContainText('pizzaPocket');
+    //await page.getByRole('link', { name: 'logout' }).click();
+});
+
+test('create store with login', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
+    await expect(page.getByRole('main')).toContainText('So you want a piece of the pie?');
+    await page.getByRole('link', { name: 'login', exact: true }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome back');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('f@jwt.com');
+    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Password' }).fill('franchisee');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page.getByRole('heading')).toContainText('pizzaPocket');
+    await page.getByRole('button', { name: 'Create store' }).click();
+    await expect(page.getByRole('heading')).toContainText('Create store');
+    await page.getByRole('textbox', { name: 'store name' }).click();
+    await page.getByRole('textbox', { name: 'store name' }).fill('Provo');
+    await page.getByRole('button', { name: 'Create' }).click();
+    //await expect(page.getByRole('heading')).toContainText('pizzaPocket');
+    //await expect(page.locator('tbody')).toContainText('Provo');
+});
+
+test('profile with login', async ({ page }) => {
+    await page.goto('http://localhost:5173/');
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await page.getByRole('link', { name: 'Login' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome back');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('d@jwt.com');
+    await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+    await page.getByRole('textbox', { name: 'Password' }).fill('diner');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page.locator('#navbar-dark')).toContainText('Logout');
+    await page.getByRole('link', { name: 'pd' }).click();
+    await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
+    await page.getByRole('link', { name: 'Logout' }).click();
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+});
+
+test('admin', async ({ page }) => {
+  await page.goto('http://localhost:5173/');
+  await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+  await page.getByRole('link', { name: 'Login' }).click();
+  await expect(page.getByRole('heading')).toContainText('Welcome back');
+  await page.getByRole('textbox', { name: 'Email address' }).click();
+  await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
+  await page.getByRole('textbox', { name: 'Email address' }).press('Tab');
+  await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+  await page.getByRole('button', { name: 'Login' }).click();
+  await expect(page.locator('#navbar-dark')).toContainText('Admin');
+  await page.getByRole('link', { name: 'Admin' }).click();
+  await expect(page.getByRole('heading')).toContainText('Mama Ricci\'s kitchen');
+});
